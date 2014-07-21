@@ -1,6 +1,6 @@
 # Redusa
 
-Redusa is a simple high score system backend API for games. It is written in Rust, a language developed by Mozilla. 
+Redusa is a simple high score backend API for games. It is written in Rust, a language developed by Mozilla. 
 
 # Description
 
@@ -8,7 +8,7 @@ The API registers scores for different users organized into levels. The size of 
 
 # Dependecies
 
-* rust-http (This will be superceded by Teepee)
+* rust-http (This will be superceded by Teepee or Iron)
 
 # General Design 
 
