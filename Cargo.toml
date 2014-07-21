@@ -1,0 +1,26 @@
+[package]
+
+name = "redusa"
+version = "0.0.1"
+authors = ["Beho Alheit <behoalheit@gmail.com>"]
+tags = ["ranking"]
+
+[[bin]]
+
+name = "redusa"
+path = "src/main.rs"
+
+[dependencies.http]
+git="https://github.com/chris-morgan/rust-http.git"
+
+[dependencies.iron]
+git = "https://github.com/iron/iron.git"
+
+[dependencies.logger]
+git = "https://github.com/iron/logger.git"
+
+[dependencies.router]
+git = "https://github.com/iron/router.git"
+
+[dependencies.bodyparser]
+git = "https://github.com/iron/body-parser.git"
