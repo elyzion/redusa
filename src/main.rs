@@ -1,6 +1,6 @@
 //! The is the main HTTP server for Redusa.
 
-#![crate_name = "redusa#0.1"]
+#![crate_name = "redusa"]
 #![allow(unused_imports)]
 #![allow(dead_code)]
 

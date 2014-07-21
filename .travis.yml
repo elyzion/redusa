@@ -6,6 +6,5 @@ install:
 script:
     - cargo build -v
     - cargo test -v
-    - make all
 os:
     - linux
