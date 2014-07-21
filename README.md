@@ -1,4 +1,4 @@
-# Redusa
+# Redusa [![Build Status](https://travis-ci.org/elyzion/redusa.svg?branch=master)](https://travis-ci.org/elyzion/redusa)
 
 Redusa is a simple high score backend API for games. It is written in Rust, a language developed by Mozilla. 
 
