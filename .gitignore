@@ -27,5 +27,5 @@ build
 !/examples/*.rs
 !/examples/assets/
 deps
-.config/
+.config/*
 *.lock

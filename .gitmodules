@@ -1,4 +1,0 @@
-[submodule "rust-empty"]
-	path = rust-empty
-	url = https://github.com/PistonDevelopers/rust-empty.git
-  branch = master

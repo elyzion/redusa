@@ -54,7 +54,7 @@ impl LevelRepository {
 }
 
 /// Reddit <3 TODO: This should be mutable.
-mod repository {
+pub mod repository {
     use super::LevelRepository;
     use std::collections::TreeMap;
     use std::sync::{Semaphore, Once, ONCE_INIT};
@@ -66,22 +66,15 @@ mod repository {
     pub fn init() -> Inited {
         unsafe {
             static mut ONCE: Once = ONCE_INIT;
-            ONCE.doit(|| { 
-                REPOSITORY = mem::transmute::<Box<LevelRepository>, *const LevelRepository>(
-                    box() ( LevelRepository 
-                            {
-                                levels: TreeMap::new(),
-                                lock:   Semaphore::new(1)
-                            }
-                          )
-                    ) 
+            ONCE.doit(|| {
+                REPOSITORY = mem::transmute(box LevelRepository::new());
             });
         }
         Inited { x: () }
     }
 
-    pub fn get(evidence: Inited) -> &'static LevelRepository {
-        unsafe { &*REPOSITORY }
+    pub fn get(evidence: Inited) -> &'static mut LevelRepository {
+        unsafe {  mem::transmute(REPOSITORY) }
     }
 }
 
@@ -189,6 +182,7 @@ mod test_level_repository {
     use level::repository;
     use level::LevelRepository;
 
+    /// TODO: Singleton ownership is broken.
     #[test]
     fn test_construct_level_repository() {
         let evi = repository::init();
@@ -196,7 +190,7 @@ mod test_level_repository {
     }
 
     #[test]
-    fn test_add_score() {
+    fn test_add_score_repository() {
         let mut repo = LevelRepository::new();
         assert!(repo.add_score(1, "1".to_string(), 1));
         assert!(repo.get_level_high_scores(1).unwrap().len() == 1);

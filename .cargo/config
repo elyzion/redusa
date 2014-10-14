@@ -1,0 +1,2 @@
+# Override for the router dependency.
+paths = ["/home/berthold_alheit/Dropbox/redusa/deps/router/"]

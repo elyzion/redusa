@@ -12,8 +12,21 @@ The API registers scores for different users organized into levels. The size of 
 
 # General Design 
 
-The functions are described in detail below and the notation <value> means a call parameter value or a return value. All calls shall result in the HTTP status code 200, unless when something goes wrong, where the appropriate HTTP code must be returned. Numbers parameters and return values are sent in decimal ASCII representation as expected.
+The functions are described in detail below. All calls shall result in the HTTP status code 200, unless when something goes wrong, where the appropriate HTTP code must be returned. Numerical parameters and return values are sent in decimal ASCII representation.
 
 # API 
+
+## Get a list of levels
+
+Signature: GET /level
+
+## Get the user and point list for a particular level
+
+Signature: GET /level/:level
+
+## Add an entry to a level
+
+Signature: POST /level/:level
+Body: Json object for user and points
 
 TODO

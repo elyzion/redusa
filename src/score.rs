@@ -1,10 +1,12 @@
 extern crate time;
+extern crate serialize;
 
 use time::precise_time_ns;
+use serialize::Encodable;
 
 /// Represents a simple score object.
 /// Scores are comprised of a user_id, a score and a registration time offset relative to some future point.
-#[deriving(Hash, Eq, Show, Clone, Send, Copy)]
+#[deriving(Hash, Eq, Show, Clone, Send, Encodable)]
 pub struct Score {
     pub user_id:    String,
     pub score:      uint,
