@@ -26,3 +26,6 @@ build
 /examples/**
 !/examples/*.rs
 !/examples/assets/
+deps
+.config/
+*.lock
