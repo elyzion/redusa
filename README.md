@@ -4,11 +4,11 @@ Redusa is a simple high score backend API for games. It is written in Rust, a la
 
 # Description
 
-The API registers scores for different users organized into levels. The size of the high score list can be configured. Levels are created dynamically. A default authentication interface is provided with a null implementation. The API returns JSON formatted data, and is RESTful. Request bodies are required to be encoded JSON entities. The default backend persists data in memory, but alternate implementations can be provided.
+The API registers scores for different users organized into levels. The size of the high score list can be configured. Levels are created dynamically. The API returns JSON formatted data. Request bodies are required to be encoded JSON entities. The default backend persists data in memory.
 
 # Dependecies
 
-* rust-http (This will be superceded by Teepee or Iron)
+* Iron
 
 # General Design 
 
@@ -30,3 +30,7 @@ Signature: POST /level/:level
 Body: Json object for user and points
 
 TODO
+
+* Authentication trait with a default implementation.
+* Extraction of backend trait so that we can have different kinds of persistence models.
+* Tests for the iron part of the program.
