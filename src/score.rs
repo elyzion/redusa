@@ -1,27 +1,27 @@
 extern crate time;
-extern crate serialize;
 
-use time::precise_time_ns;
-use serialize::Encodable;
+use self::time::precise_time_ns;
+use std::cmp::Ordering;
+use std::cmp::Ordering::*;
 
 /// Represents a simple score object.
 /// Scores are comprised of a user_id, a score and a registration time offset relative to some future point.
-#[deriving(Hash, Eq, Show, Clone, Send, Encodable)]
+#[derive(Hash, Eq, Clone, Deserialize, Serialize, Debug)]
 pub struct Score {
     pub user_id:    String,
-    pub score:      uint,
+    pub score:      u64,
     timestamp:  u64,
 }
 
 impl Score {
     /// Creates a new `Score` instance, `timestamp` is usually not specified explicitly.
-    pub fn new(user_id: String, score: uint) -> Score {
+    pub fn new(user_id: String, score: u64) -> Score {
         Score { user_id: user_id, score: score, timestamp: time::precise_time_ns() }
     }
 
     /// Creates a new `Score` instance with an explicit `timestamp`.
     /// Note: I would prefer to use another new.. but Rust doesn't allow duplicate function names.
-    fn with_timestamp(user_id: String, score: uint, timestamp: u64) -> Score {
+    fn with_timestamp(user_id: String, score: u64, timestamp: u64) -> Score {
         Score { user_id: user_id, score: score, timestamp: timestamp }
     }
 }
@@ -74,19 +74,19 @@ mod test_score {
     ///     user_id(DESC)
     #[test]
     fn test_score_sort_order() {
-        let mut highScore = Score::new(String::from_str("1"), 2);
-        let mut lowScore = Score::new(String::from_str("1"), 2);
+        let mut highScore = Score::new(String::from("1"), 2);
+        let mut lowScore = Score::new(String::from("1"), 2);
         // highScore was registered before lowscore.
         assert!(highScore > lowScore);
         
         // highScore has a higher score than lowScore.
-        lowScore = Score::new(String::from_str("1"), 1);
-        highScore = Score::new(String::from_str("1"), 2);
+        lowScore = Score::new(String::from("1"), 1);
+        highScore = Score::new(String::from("1"), 2);
         assert!(highScore > lowScore);
     
        // highScore user_id has a higher ordering than lowScore user_id.
-        lowScore = Score::with_timestamp(String::from_str("1"), 1, 1);
-        highScore = Score::with_timestamp(String::from_str("2"), 1, 1);
+        lowScore = Score::with_timestamp(String::from("1"), 1, 1);
+        highScore = Score::with_timestamp(String::from("2"), 1, 1);
         assert!(highScore > lowScore);
     }
 
@@ -94,13 +94,13 @@ mod test_score {
     /// or to another score object with exactly the same parameters.
     #[test]
     fn test_score_equivalence() {
-       let mut score = Score::new(String::from_str("1"), 2);
+       let mut score = Score::new(String::from("1"), 2);
     
         // Self equivalence.
         assert!(score == score);
 
-        score = Score::with_timestamp(String::from_str("1"), 1, 1);
-        let otherScore = Score::with_timestamp(String::from_str("1"), 1, 1);
+        score = Score::with_timestamp(String::from("1"), 1, 1);
+        let otherScore = Score::with_timestamp(String::from("1"), 1, 1);
     
         // Field equivalence.
         assert!(score == otherScore);

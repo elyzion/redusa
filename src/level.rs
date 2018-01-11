@@ -1,48 +1,52 @@
 
-use std::sync::Semaphore;
-use std::sync::atomics::{AtomicInt, SeqCst};
-use std::collections::treemap::{TreeSet, TreeMap};
+use std::sync::Mutex;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering::SeqCst;
+use std::collections::{BTreeSet,BTreeMap};
+use std::sync::{Once, ONCE_INIT};
 
 use score::Score;
 use config::HIGHSCORE_LIST_SIZE;
 
 pub struct LevelRepository {
-    levels:     TreeMap<uint, Level>,
-    lock:       Semaphore
+    levels:     BTreeMap<u64, Level>,
+    lock:       Mutex<usize>
 }
 
 impl LevelRepository {
 
     pub fn new() -> LevelRepository {
         LevelRepository {
-            levels: TreeMap::new(),
-            lock:   Semaphore::new(1)
+            levels: BTreeMap::new(),
+            lock:   Mutex::new(1)
         }
     }
 
-    pub fn get_level_high_scores(&self, levelId: uint) -> Option<TreeSet<Score>> {
-        match self.levels.find(&levelId) {
+    pub fn get_level_high_scores(&self, levelId: u64) -> Option<BTreeSet<Score>> {
+        match self.levels.get(&levelId) {
             Some(level) => Some(level.get_high_scores()),
             None => None
         }
     }
 
-    pub fn add_score(&mut self, levelId: uint, userId: String, points: uint) -> bool {
+    pub fn add_score(&mut self, levelId: u64, userId: String, points: u64) -> bool {
         if self.levels.contains_key(&levelId) {
-            match self.levels.find_mut(&levelId) {
+            match self.levels.get_mut(&levelId) {
                 Some(ref mut level) => level.add_score(userId, points),
                 None => true
             }
         } else {
-            self.lock.acquire();
+            self.lock.lock();
             let ret = if !self.levels.contains_key(&levelId) {
                 let mut level = Level::new();
                 level.add_score(userId, points);
-                self.levels.insert(levelId, level)
+                match self.levels.insert(levelId, level) {
+                    Some(b) => false,
+                    None => true
+                }
             } else {
-                self.levels.find_mut(&levelId).unwrap().add_score(userId, points)
+                self.levels.get_mut(&levelId).unwrap().add_score(userId, points)
             };
-            self.lock.release();
             ret
         }
     }
@@ -56,8 +60,8 @@ impl LevelRepository {
 /// Reddit <3 TODO: This should be mutable.
 pub mod repository {
     use super::LevelRepository;
-    use std::collections::TreeMap;
-    use std::sync::{Semaphore, Once, ONCE_INIT};
+    use std::collections::BTreeMap;
+    use std::sync::{Mutex, Once, ONCE_INIT};
     use std::mem;
 
     static mut REPOSITORY: *const LevelRepository = 0 as *const LevelRepository;
@@ -66,8 +70,8 @@ pub mod repository {
     pub fn init() -> Inited {
         unsafe {
             static mut ONCE: Once = ONCE_INIT;
-            ONCE.doit(|| {
-                REPOSITORY = mem::transmute(box LevelRepository::new());
+            ONCE.call_once(|| {
+                REPOSITORY = mem::transmute(Box::new(LevelRepository::new()));
             });
         }
         Inited { x: () }
@@ -80,28 +84,28 @@ pub mod repository {
 
 
 pub struct Level {
-    scores:     TreeSet<Score>,
-    highScores: TreeSet<Score>,
-    lock:       Semaphore,
-    counter:    AtomicInt,
+    scores:     BTreeSet<Score>,
+    highScores: BTreeSet<Score>,
+    lock:       Mutex<usize>,
+    counter:    AtomicUsize,
 }
 
 impl Level {
     pub fn new() -> Level {
         Level { 
-            scores: TreeSet::new(), 
-                        highScores: TreeSet::new(), 
-                        lock: Semaphore::new(1),
-                        counter: AtomicInt::new(0)
+            scores: BTreeSet::new(), 
+                        highScores: BTreeSet::new(), 
+                        lock: Mutex::new(0),
+                        counter: AtomicUsize::new(0)
         }
     }
 
-    pub fn get_high_scores(&self) -> TreeSet<Score> {
+    pub fn get_high_scores(&self) -> BTreeSet<Score> {
         // Clone so that we don't have to worry about overwrites
         self.highScores.clone()
     }
 
-    pub fn add_score(&mut self, user_id: String, points: uint) -> bool {
+    pub fn add_score(&mut self, user_id: String, points: u64) -> bool {
         let score = Score::new(user_id.clone(), points.clone());
 
         let min = match self.scores.iter().last() {
@@ -109,25 +113,25 @@ impl Level {
             None    => None
         };
 
-        if min.is_some() && min.get_ref() > &score && self.counter.load(SeqCst) == HIGHSCORE_LIST_SIZE {
+        if min.is_some() && min.as_ref().unwrap() > &score && self.counter.load(SeqCst) == HIGHSCORE_LIST_SIZE {
             return false
         } else if self.scores.contains(&score) {
             return false
         }
 
-        self.lock.acquire();
+        self.lock.lock();
         let userScore = match self.scores.iter().find(|x| x.user_id == score.user_id) {
             Some(u) => Some(u.clone()),
             None    => None
         };
 
-        if userScore.is_some() && userScore.get_ref() > &score {
+        if userScore.is_some() && userScore.as_ref().unwrap() > &score {
             return false
         }
 
         if self.scores.insert(score) {
             if userScore.is_some() {
-                self.scores.remove(userScore.get_ref());
+                self.scores.remove(userScore.as_ref().unwrap());
             } else if self.counter.load(SeqCst) < HIGHSCORE_LIST_SIZE {
                 self.counter.fetch_add(1, SeqCst);
             } else {
@@ -138,11 +142,9 @@ impl Level {
                 self.scores.remove(&remove.unwrap());
             }
             self.update_high_scores();
-            self.lock.release();
             return true
         } else {
             self.update_high_scores();
-            self.lock.release();
             return false
         }
     }
@@ -160,8 +162,8 @@ impl Level {
         None
     }
 
-    pub fn get_score(&self, score: uint) -> Option<TreeSet<Score>> {
-        let scores: TreeSet<Score> = 
+    pub fn get_score(&self, score: u64) -> Option<BTreeSet<Score>> {
+        let scores: BTreeSet<Score> = 
             self.scores
             .iter()
             .filter(|ref x| x.score == score) 
@@ -226,8 +228,8 @@ mod test_level {
     #[test]
     fn test_size_limit() {
         let mut level = Level::new();
-        for i in range(0, HIGHSCORE_LIST_SIZE) {
-            level.add_score(i.to_string(), i.to_uint().unwrap());
+        for i in 0..HIGHSCORE_LIST_SIZE {
+            level.add_score(i.to_string(), i as u64);
         }
 
         assert_eq!(level.scores.len(), 15);
