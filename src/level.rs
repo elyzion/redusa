@@ -36,12 +36,12 @@ impl LevelRepository {
                 None => true
             }
         } else {
-            self.lock.lock();
+            let guard = self.lock.lock();
             let ret = if !self.levels.contains_key(&levelId) {
                 let mut level = Level::new();
                 level.add_score(userId, points);
                 match self.levels.insert(levelId, level) {
-                    Some(b) => false,
+                    Some(_) => false,
                     None => true
                 }
             } else {
@@ -85,7 +85,7 @@ pub mod repository {
 
 pub struct Level {
     scores:     BTreeSet<Score>,
-    highScores: BTreeSet<Score>,
+    high_scores: BTreeSet<Score>,
     lock:       Mutex<usize>,
     counter:    AtomicUsize,
 }
@@ -94,7 +94,7 @@ impl Level {
     pub fn new() -> Level {
         Level { 
             scores: BTreeSet::new(), 
-                        highScores: BTreeSet::new(), 
+                        high_scores: BTreeSet::new(), 
                         lock: Mutex::new(0),
                         counter: AtomicUsize::new(0)
         }
@@ -102,7 +102,7 @@ impl Level {
 
     pub fn get_high_scores(&self) -> BTreeSet<Score> {
         // Clone so that we don't have to worry about overwrites
-        self.highScores.clone()
+        self.high_scores.clone()
     }
 
     pub fn add_score(&mut self, user_id: String, points: u64) -> bool {
@@ -150,7 +150,7 @@ impl Level {
     }
 
     fn update_high_scores(&mut self) {
-        self.highScores = self.scores.clone();
+        self.high_scores = self.scores.clone();
     }
 
     pub fn get_user_score<'s>(&'s self, user_id: String) -> Option<&'s Score> {

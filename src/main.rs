@@ -65,7 +65,7 @@ fn get_level(req: &mut Request) -> IronResult<Response> {
     let score = level::repository::get(evidence).get_level_high_scores(u64::from_str(level).unwrap());
     let js = serde_json::to_string(&score).unwrap();
     match score { 
-        Some(tree) => Ok(Response::with((mime!(Application/Json), status::Ok, js))),
+        Some(_) => Ok(Response::with((mime!(Application/Json), status::Ok, js))),
         None => Ok(Response::with((mime!(Application/Json), status::Ok, "{}")))
     }
 }
